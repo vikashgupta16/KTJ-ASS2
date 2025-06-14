@@ -185,23 +185,6 @@ function generatePuzzle() {
   startTimer();
 }
 
-// THEME TOGGLE
-// function setTheme(theme) {
-//   document.body.classList.toggle('light-theme', theme === 'light');
-//   document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌞' : '🌙';
-//   try {
-//     localStorage.setItem('theme', theme);
-//   } catch (e) {
-//     // Handle localStorage errors gracefully
-//     console.log('Unable to save theme preference');
-//   }
-// }
-
-// document.getElementById('theme-toggle').addEventListener('click', () => {
-//   const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-//   setTheme(newTheme);
-// });
-
 // BUTTONS
 document.getElementById("new-game").onclick = () => {
   const btn = document.getElementById("new-game");
@@ -216,6 +199,13 @@ document.getElementById("new-game").onclick = () => {
     btn.style.opacity = "1";
   }, 500);
 };
+
+// Add event listener for difficulty select
+difficultyEl.addEventListener('change', () => {
+  generatePuzzle();
+  createBoard();
+  showMessage(`Difficulty changed to ${difficultyEl.value}!`);
+});
 
 document.getElementById("reset-game").onclick = () => {
   const cells = boardEl.children;
@@ -268,27 +258,35 @@ function launchConfetti() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   const ctx = canvas.getContext("2d");
-  const pieces = Array.from({ length: 100 }, () => ({
+  const pieces = Array.from({ length: 150 }, () => ({
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height - canvas.height,
     r: Math.random() * 6 + 4,
     c: `hsl(${Math.random() * 360}, 70%, 60%)`,
-    s: Math.random() * 3 + 2
+    s: Math.random() * 3 + 2,
+    shape: Math.random() > 0.5 ? 'circle' : 'square'
   }));
   let frame = 0;
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     for (const p of pieces) {
       ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      if (p.shape === 'circle') {
+        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      } else {
+        ctx.rect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+      }
       ctx.fillStyle = p.c;
       ctx.fill();
       p.y += p.s;
+      p.x += Math.sin(frame * 0.01 + pieces.indexOf(p)) * 2;
       if (p.y > canvas.height) p.y = 0;
     }
     frame++;
-    if (frame < 150) requestAnimationFrame(draw);
+    if (frame < 200) requestAnimationFrame(draw);
+    else canvas.style.display = 'none';
   }
+  canvas.style.display = 'block';
   draw();
 }
 
@@ -319,4 +317,9 @@ window.onload = () => {
   generatePuzzle();
   createBoard();
   addTouchSupport();
+  
+  // Add fade-in animation to the board
+  setTimeout(() => {
+    document.querySelector('.container').classList.add('fade-in');
+  }, 100);
 };
