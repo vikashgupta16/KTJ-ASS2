@@ -173,7 +173,7 @@ function generatePuzzle() {
   stopTimer();
   const level = difficultyEl.value;
 
-  // ✅ UPDATE DIFFICULTY LABEL
+  // Update difficulty label
   document.querySelector('.difficulty-level').textContent = level.charAt(0).toUpperCase() + level.slice(1);
 
   const pool = PUZZLES[level];
@@ -184,17 +184,23 @@ function generatePuzzle() {
   gameCompleted = false;
   startTimer();
 }
-function setTheme(theme) {
-  document.body.classList.toggle('light-theme', theme === 'light');
-  document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌞' : '🌙';
-  localStorage.setItem('theme', theme);
-}
 
-document.getElementById('theme-toggle').addEventListener('click', () => {
-  const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
-  setTheme(newTheme);
-});
+// THEME TOGGLE
+// function setTheme(theme) {
+//   document.body.classList.toggle('light-theme', theme === 'light');
+//   document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌞' : '🌙';
+//   try {
+//     localStorage.setItem('theme', theme);
+//   } catch (e) {
+//     // Handle localStorage errors gracefully
+//     console.log('Unable to save theme preference');
+//   }
+// }
 
+// document.getElementById('theme-toggle').addEventListener('click', () => {
+//   const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+//   setTheme(newTheme);
+// });
 
 // BUTTONS
 document.getElementById("new-game").onclick = () => {
@@ -230,7 +236,7 @@ function addTouchSupport() {
       e.target.focus();
     }
   });
-  // arrow‐key nav + digit entry
+  // arrow-key nav + digit entry
   document.addEventListener('keydown', e => {
     const active = document.activeElement;
     if (!active.classList.contains('cell')) return;
@@ -290,7 +296,11 @@ function launchConfetti() {
 function setTheme(theme) {
   document.body.classList.toggle('light-theme', theme === 'light');
   document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌞' : '🌙';
-  localStorage.setItem('theme', theme);
+  try {
+    localStorage.setItem('theme', theme);
+  } catch (e) {
+    console.log('Unable to save theme preference');
+  }
 }
 
 document.getElementById('theme-toggle').addEventListener('click', () => {
@@ -298,10 +308,14 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   setTheme(newTheme);
 });
 
-// INIT
 window.onload = () => {
-  // apply saved theme (default dark)
-  setTheme(localStorage.getItem('theme') || 'dark');
+  let savedTheme = 'dark';
+  try {
+    savedTheme = localStorage.getItem('theme') || 'dark';
+  } catch (e) {
+    console.log('Unable to load theme preference');
+  }
+  setTheme(savedTheme);
   generatePuzzle();
   createBoard();
   addTouchSupport();
