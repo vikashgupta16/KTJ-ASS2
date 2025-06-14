@@ -1,21 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Sudoku Game</title>
+  <title>Sudoku Game - Interactive Puzzle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+    content="Play an interactive Sudoku puzzle game with beautiful animations and responsive design">
+  <meta name="theme-color" content="#6d28d9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="shortcut icon" href="game.png" type="image/x-icon">
+  <link rel="apple-touch-icon" href="game.png">
   <link rel="stylesheet" href="style.css">
+
+  <!-- Preload critical resources -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <div class="container">
-    <h1>Sudoku</h1>
+    <div class="header">
+      <h1>Sudoku</h1>
+      <div class="difficulty">
+        <span>Difficulty:</span>
+        <div class="difficulty-level">Medium</div>
+      </div>
+    </div>
     <div id="sudoku-board" class="sudoku-board"></div>
     <div class="controls">
-      <button id="new-game">New Game</button>
-      <button id="reset-game">Reset</button>
+      <div class="toggles">
+        <label>
+          <input type="checkbox" id="auto-check" checked />
+          Auto Check
+        </label>
+        <select id="difficulty-select">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+      <button id="new-game" class="btn-primary">
+        <span class="btn-icon">🔄</span>
+        <span class="btn-text">New Game</span>
+      </button>
+      <button id="reset-game" class="btn-secondary">
+        <span class="btn-icon">↩️</span>
+        <span class="btn-text">Reset</span>
+      </button>
+      <button id="theme-toggle" class="btn-secondary">🌙</button>
       <span id="message"></span>
+    </div>
+    <canvas id="confetti-canvas"></canvas>
+    <div class="footer">
+      <div class="timer">⏱️ 00:00</div>
+      <div class="hint">Press 1-9 to fill cells</div>
     </div>
   </div>
   <script src="script.js"></script>
 </body>
+
 </html>

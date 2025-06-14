@@ -1,183 +1,308 @@
-// Simple Sudoku preset puzzles (0 = empty)
-const PUZZLES = [
-  [
-    [5,3,0, 0,7,0, 0,0,0],
-    [6,0,0, 1,9,5, 0,0,0],
-    [0,9,8, 0,0,0, 0,6,0],
-    [8,0,0, 0,6,0, 0,0,3],
-    [4,0,0, 8,0,3, 0,0,1],
-    [7,0,0, 0,2,0, 0,0,6],
-    [0,6,0, 0,0,0, 2,8,0],
-    [0,0,0, 4,1,9, 0,0,5],
-    [0,0,0, 0,8,0, 0,7,9]
+// PUZZLE SETS
+const PUZZLES = {
+  easy: [
+    [
+      [0, 0, 3, 0, 2, 0, 6, 0, 0],
+      [9, 0, 0, 3, 0, 5, 0, 0, 1],
+      [0, 0, 1, 8, 0, 6, 4, 0, 0],
+      [0, 0, 8, 1, 0, 2, 9, 0, 0],
+      [7, 0, 0, 0, 0, 0, 0, 0, 8],
+      [0, 0, 6, 7, 0, 8, 2, 0, 0],
+      [0, 0, 2, 6, 0, 9, 5, 0, 0],
+      [8, 0, 0, 2, 0, 3, 0, 0, 9],
+      [0, 0, 5, 0, 1, 0, 3, 0, 0]
+    ]
   ],
-  [
-    [0,2,0, 6,0,8, 0,0,0],
-    [5,8,0, 0,0,9, 7,0,0],
-    [0,0,0, 0,4,0, 0,0,0],
-    [3,7,0, 0,0,0, 5,0,0],
-    [6,0,0, 0,0,0, 0,0,4],
-    [0,0,8, 0,0,0, 0,1,3],
-    [0,0,0, 0,2,0, 0,0,0],
-    [0,0,9, 8,0,0, 0,3,6],
-    [0,0,0, 3,0,6, 0,9,0]
+  medium: [
+    [
+      [5, 3, 0, 0, 7, 0, 0, 0, 0],
+      [6, 0, 0, 1, 9, 5, 0, 0, 0],
+      [0, 9, 8, 0, 0, 0, 0, 6, 0],
+      [8, 0, 0, 0, 6, 0, 0, 0, 3],
+      [4, 0, 0, 8, 0, 3, 0, 0, 1],
+      [7, 0, 0, 0, 2, 0, 0, 0, 6],
+      [0, 6, 0, 0, 0, 0, 2, 8, 0],
+      [0, 0, 0, 4, 1, 9, 0, 0, 5],
+      [0, 0, 0, 0, 8, 0, 0, 7, 9]
+    ]
+  ],
+  hard: [
+    [
+      [0, 0, 0, 0, 0, 0, 0, 0, 1],
+      [3, 0, 0, 0, 0, 0, 2, 0, 0],
+      [0, 0, 0, 7, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 6, 0, 0, 0, 0],
+      [5, 0, 0, 0, 0, 0, 0, 0, 8],
+      [0, 0, 0, 0, 1, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 9, 0, 0, 0],
+      [0, 0, 4, 0, 0, 0, 0, 0, 5],
+      [9, 0, 0, 0, 0, 0, 0, 0, 0]
+    ]
   ]
-];
-let solution = [];
+};
+
 let currentPuzzle = [];
 let prefilled = [];
-const boardEl = document.getElementById('sudoku-board');
-const messageEl = document.getElementById('message');
+let solution = [];
+let gameCompleted = false;
+const boardEl = document.getElementById("sudoku-board");
+const autoCheckEl = document.getElementById("auto-check");
+const difficultyEl = document.getElementById("difficulty-select");
 
-function deepCopy(mat) {
-  return mat.map(row => row.slice());
+// UTIL
+function deepCopy(grid) {
+  return JSON.parse(JSON.stringify(grid));
 }
 
-function generatePuzzle() {
-  // Pick a random puzzle
-  const idx = Math.floor(Math.random() * PUZZLES.length);
-  currentPuzzle = deepCopy(PUZZLES[idx]);
-  prefilled = currentPuzzle.map(row => row.map(cell => cell !== 0));
-  // Compute the solution for check
-  solution = deepCopy(currentPuzzle);
-  solve(solution);
+function solve(grid) {
+  const findEmpty = () => {
+    for (let r = 0; r < 9; r++)
+      for (let c = 0; c < 9; c++)
+        if (grid[r][c] === 0) return [r, c];
+    return null;
+  };
+
+  const isValid = (num, pos) => {
+    const [r, c] = pos;
+    for (let i = 0; i < 9; i++) {
+      if (grid[r][i] === num && i !== c) return false;
+      if (grid[i][c] === num && i !== r) return false;
+    }
+    const boxRow = Math.floor(r / 3) * 3;
+    const boxCol = Math.floor(c / 3) * 3;
+    for (let i = boxRow; i < boxRow + 3; i++)
+      for (let j = boxCol; j < boxCol + 3; j++)
+        if (grid[i][j] === num && (i !== r || j !== c)) return false;
+    return true;
+  };
+
+  const helper = () => {
+    const empty = findEmpty();
+    if (!empty) return true;
+    const [r, c] = empty;
+    for (let num = 1; num <= 9; num++) {
+      if (isValid(num, [r, c])) {
+        grid[r][c] = num;
+        if (helper()) return true;
+        grid[r][c] = 0;
+      }
+    }
+    return false;
+  };
+
+  helper();
 }
 
+// TIMER
+let startTime, timerInterval;
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const min = Math.floor(elapsed / 60).toString().padStart(2, "0");
+    const sec = (elapsed % 60).toString().padStart(2, "0");
+    document.querySelector(".timer").textContent = `⏱️ ${min}:${sec}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+}
+
+// BOARD RENDER
 function createBoard() {
   boardEl.innerHTML = '';
   for (let r = 0; r < 9; r++) {
     for (let c = 0; c < 9; c++) {
-      const cell = document.createElement('input');
-      cell.type = 'text';
-      cell.maxLength = 1;
-      cell.className = 'cell';
-      cell.dataset.row = r;
-      cell.dataset.col = c;
-      if (currentPuzzle[r][c] !== 0) {
-        cell.value = currentPuzzle[r][c];
-        cell.disabled = true;
-        cell.classList.add('prefilled');
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 1;
+      input.inputMode = 'numeric';
+      input.pattern = '[1-9]*';
+      input.classList.add("cell");
+
+      if (prefilled[r][c]) {
+        input.value = currentPuzzle[r][c];
+        input.disabled = true;
+        input.classList.add("prefilled");
       } else {
-        cell.value = '';
-        cell.addEventListener('input', onInput);
-        cell.addEventListener('keydown', onKeyDown);
-      }
-      boardEl.appendChild(cell);
-    }
-  }
-}
-
-function onInput(e) {
-  let v = e.target.value.replace(/[^1-9]/g, '');
-  e.target.value = v;
-  if (v.length === 1) {
-    checkBoard();
-  }
-}
-
-function onKeyDown(e) {
-  // Navigate with arrow keys
-  const r = parseInt(e.target.dataset.row);
-  const c = parseInt(e.target.dataset.col);
-  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
-    let nr = r, nc = c;
-    if (e.key === 'ArrowLeft') nc = Math.max(0, c - 1);
-    if (e.key === 'ArrowRight') nc = Math.min(8, c + 1);
-    if (e.key === 'ArrowUp') nr = Math.max(0, r - 1);
-    if (e.key === 'ArrowDown') nr = Math.min(8, r + 1);
-    const next = document.querySelector(`.cell[data-row='${nr}'][data-col='${nc}']`);
-    if (next && !next.disabled) next.focus();
-    e.preventDefault();
-  }
-}
-
-function getCurrentBoard() {
-  const board = [];
-  for (let r = 0; r < 9; r++) {
-    const row = [];
-    for (let c = 0; c < 9; c++) {
-      const cell = boardEl.children[r * 9 + c];
-      if (cell.value === '') row.push(0);
-      else row.push(Number(cell.value));
-    }
-    board.push(row);
-  }
-  return board;
-}
-
-function checkBoard() {
-  const userBoard = getCurrentBoard();
-  let complete = true;
-  let correct = true;
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      const cell = boardEl.children[r * 9 + c];
-      if (prefilled[r][c]) continue;
-      if (userBoard[r][c] === 0) {
-        cell.style.background = '';
-        complete = false;
-      } else if (userBoard[r][c] !== solution[r][c]) {
-        cell.style.background = '#ffe3e3';
-        correct = false;
-      } else {
-        cell.style.background = '#b2f2bb';
-      }
-    }
-  }
-  if (complete && correct) {
-    showMessage('🎉 Congratulations! Sudoku solved!', true);
-  } else if (!correct) {
-    showMessage('There are mistakes.', false);
-  } else {
-    showMessage('', false);
-  }
-}
-
-function showMessage(msg, success) {
-  messageEl.textContent = msg;
-  messageEl.style.color = success ? '#b2f2bb' : '#fff';
-}
-
-// Sudoku solver (backtracking)
-function solve(board) {
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      if (board[r][c] === 0) {
-        for (let n = 1; n <= 9; n++) {
-          if (isValid(board, r, c, n)) {
-            board[r][c] = n;
-            if (solve(board)) return true;
-            board[r][c] = 0;
+        input.addEventListener("input", () => {
+          const val = parseInt(input.value);
+          if (!autoCheckEl.checked) return;
+          if (val === solution[r][c]) {
+            input.classList.add("correct");
+            input.classList.remove("incorrect");
+          } else {
+            input.classList.add("incorrect");
+            input.classList.remove("correct");
           }
-        }
-        return false;
+          checkCompletion();
+        });
       }
+
+      boardEl.appendChild(input);
     }
   }
-  return true;
 }
-function isValid(board, row, col, num) {
-  for (let i = 0; i < 9; i++) {
-    if (board[row][i] === num || board[i][col] === num) return false;
+
+function checkCompletion() {
+  const cells = boardEl.querySelectorAll("input");
+  for (let i = 0; i < cells.length; i++) {
+    if (!cells[i].classList.contains("prefilled")) {
+      const val = parseInt(cells[i].value);
+      const r = Math.floor(i / 9);
+      const c = i % 9;
+      if (val !== solution[r][c]) return false;
+    }
   }
-  const boxRow = Math.floor(row / 3) * 3, boxCol = Math.floor(col / 3) * 3;
-  for (let r = 0; r < 3; r++)
-    for (let c = 0; c < 3; c++)
-      if (board[boxRow + r][boxCol + c] === num) return false;
-  return true;
+  if (!gameCompleted) {
+    gameCompleted = true;
+    stopTimer();
+    showMessage("🎉 Puzzle Completed!");
+    launchConfetti();
+  }
 }
 
-document.getElementById('new-game').onclick = () => {
-  generatePuzzle();
-  createBoard();
-  showMessage('New puzzle loaded!');
-};
-document.getElementById('reset-game').onclick = () => {
-  createBoard();
-  showMessage('Puzzle reset.');
+// GAME LOGIC
+function showMessage(msg) {
+  document.getElementById("message").textContent = msg;
+}
+
+function generatePuzzle() {
+  stopTimer();
+  const level = difficultyEl.value;
+
+  // ✅ UPDATE DIFFICULTY LABEL
+  document.querySelector('.difficulty-level').textContent = level.charAt(0).toUpperCase() + level.slice(1);
+
+  const pool = PUZZLES[level];
+  currentPuzzle = deepCopy(pool[Math.floor(Math.random() * pool.length)]);
+  prefilled = currentPuzzle.map(row => row.map(cell => cell !== 0));
+  solution = deepCopy(currentPuzzle);
+  solve(solution);
+  gameCompleted = false;
+  startTimer();
+}
+function setTheme(theme) {
+  document.body.classList.toggle('light-theme', theme === 'light');
+  document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌞' : '🌙';
+  localStorage.setItem('theme', theme);
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+  setTheme(newTheme);
+});
+
+
+// BUTTONS
+document.getElementById("new-game").onclick = () => {
+  const btn = document.getElementById("new-game");
+  const text = btn.querySelector(".btn-text");
+  text.textContent = "Loading...";
+  btn.style.opacity = "0.8";
+  setTimeout(() => {
+    generatePuzzle();
+    createBoard();
+    showMessage("New puzzle loaded!");
+    text.textContent = "New Game";
+    btn.style.opacity = "1";
+  }, 500);
 };
 
+document.getElementById("reset-game").onclick = () => {
+  const cells = boardEl.children;
+  for (let i = 0; i < cells.length; i++) {
+    if (!cells[i].classList.contains("prefilled")) {
+      cells[i].value = "";
+      cells[i].classList.remove("correct", "incorrect");
+    }
+  }
+  gameCompleted = false;
+  showMessage("Puzzle reset");
+};
+
+function addTouchSupport() {
+  // touch to focus cells
+  boardEl.addEventListener('touchstart', e => {
+    if (e.target.classList.contains('cell') && !e.target.disabled) {
+      e.target.focus();
+    }
+  });
+  // arrow‐key nav + digit entry
+  document.addEventListener('keydown', e => {
+    const active = document.activeElement;
+    if (!active.classList.contains('cell')) return;
+    const cells = Array.from(boardEl.children);
+    let idx = cells.indexOf(active);
+    let row = Math.floor(idx / 9), col = idx % 9;
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+      switch (e.key) {
+        case 'ArrowUp':    row = (row + 8) % 9; break;
+        case 'ArrowDown':  row = (row + 1) % 9; break;
+        case 'ArrowLeft':  col = (col + 8) % 9; break;
+        case 'ArrowRight': col = (col + 1) % 9; break;
+      }
+      cells[row * 9 + col].focus();
+      e.preventDefault();
+    } else if (/^[1-9]$/.test(e.key)) {
+      if (!active.disabled) {
+        active.value = e.key;
+        active.dispatchEvent(new Event('input'));
+      }
+      e.preventDefault();
+    }
+  });
+}
+
+// CONFETTI
+function launchConfetti() {
+  const canvas = document.getElementById("confetti-canvas");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext("2d");
+  const pieces = Array.from({ length: 100 }, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height - canvas.height,
+    r: Math.random() * 6 + 4,
+    c: `hsl(${Math.random() * 360}, 70%, 60%)`,
+    s: Math.random() * 3 + 2
+  }));
+  let frame = 0;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of pieces) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      ctx.fillStyle = p.c;
+      ctx.fill();
+      p.y += p.s;
+      if (p.y > canvas.height) p.y = 0;
+    }
+    frame++;
+    if (frame < 150) requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// THEME TOGGLE
+function setTheme(theme) {
+  document.body.classList.toggle('light-theme', theme === 'light');
+  document.getElementById('theme-toggle').textContent = theme === 'light' ? '🌞' : '🌙';
+  localStorage.setItem('theme', theme);
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const newTheme = document.body.classList.contains('light-theme') ? 'dark' : 'light';
+  setTheme(newTheme);
+});
+
+// INIT
 window.onload = () => {
+  // apply saved theme (default dark)
+  setTheme(localStorage.getItem('theme') || 'dark');
   generatePuzzle();
   createBoard();
+  addTouchSupport();
 };
