@@ -14,7 +14,7 @@ You can view and play the game directly in your browser:
 
 ## 📸 Screenshot
 
-![Sudoku Game Screenshot](./assets/screenshot.png)  
+![Sudoku Game Screenshot](./assets/Game.png)  
 
 ---
 
